@@ -1,12 +1,23 @@
 #!/usr/bin/python
 
-# nominimizebox.py
-
 import wx
-from generalFunctions import generateQuestion
+#from generalFunctions import generateQuestion
+from testing import passArg
 
 class Example(wx.Frame):
            
+    geom_object = None
+    geom_concept = None
+    geom_theorem = None
+    geom_num_of_ques = None
+
+    #def setObject(self, obj):
+#	global geom_object 
+#	geom_object = obj
+
+ #   def getObject(self):
+#	return geom_object
+
     def __init__(self, *args, **kw):
         super(Example, self).__init__(*args, **kw) 
         
@@ -44,6 +55,7 @@ class Example(wx.Frame):
 
 	cbtn_quesGen = wx.Button(pnl, label='Generate Question', pos=(20, 130))
         cbtn_quesGen.Bind(wx.EVT_BUTTON, self.OnQuesGen)
+        
  
 	self.SetSize((1000, 600))
         self.SetTitle('wx.ComboBox')
@@ -51,28 +63,36 @@ class Example(wx.Frame):
         self.Show(True)          
         
     def OnSelect(self, e):
-        print("inside Onselect ")
         i = e.GetString()
-        self.st.SetLabel(i)
+	global geom_object
+	geom_object = i
+        print("inside Onselect object, object selected is " + geom_object)
+        #self.st.SetLabel(i)
         #self.st = wx.StaticText(pnl, label='', pos=(100, 140))
         
     def OnSelect_concept(self, e):
-        print("inside Onselect_concept ")
         i = e.GetString()
-        self.st.SetLabel(i)
+	global geom_concept
+	geom_concept = i
+        print("inside Onselect_concept, conept slected is  "+ geom_concept)
+        #self.st.SetLabel(i)
         #self.st = wx.StaticText(pnl, label='', pos=(400, 140))
 
     def OnSelect_theorem(self, e):
         print("inside Onselect_theorem ")
         i = e.GetString()
-        self.st.SetLabel(i)
+	global geom_theorem
+	geom_theorem = i
+        #self.st.SetLabel(i)
         #self.st = wx.StaticText(pnl, label='', pos=(400, 140))
 
 
     def OnSelect_numQuestions(self, e):
         print("inside Onselect_numQuestions ")
         i = e.GetString()
-        self.st.SetLabel(i)
+	global geom_num_of_ques
+	geom_num_of_ques = i
+        #self.st.SetLabel(i)
         #self.st = wx.StaticText(pnl, label='', pos=(400, 140))
 
     def OnClose(self, e):
@@ -87,7 +107,8 @@ class Example(wx.Frame):
         dc.DrawLine(200, 200, 500, 500) 
 
 	#Calling this function to start algorithm for question generation
-	generateQuestion()
+	#generateQuestion()
+	passArg(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
 
 def main():
     
