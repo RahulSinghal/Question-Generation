@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import wx
-#from generalFunctions import generateQuestion
-from testing import passArg
+from generalFunctions import generateQuestion
+#from testing import passArg
 
 class Example(wx.Frame):
            
@@ -107,8 +107,8 @@ class Example(wx.Frame):
         dc.DrawLine(200, 200, 500, 500) 
 
 	#Calling this function to start algorithm for question generation
-	#generateQuestion()
-	passArg(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
+	generateQuestion(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
+	#passArg(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
 
 def main():
     
