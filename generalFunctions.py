@@ -83,6 +83,15 @@ p3 = getNewPointName()
 triangleName = p1+p2+p3
 print(triangleName)
 
+def getNewTriangleName():
+	p1 = getNewPointName()
+	p2 = getNewPointName()
+	p3 = getNewPointName()
+	triangleName = p1+p2+p3
+	print(triangleName)
+	return triangleName
+#EOF
+
 def write_Name_In_File(letter):
 	#name(A,'A'),
 	fo.write("name(" +letter.lower() +letter + ",'" + letter + "'),\n") 
@@ -163,9 +172,10 @@ dictLine_Point = []
 countLine = []
 def print_row_new(row):
     a, b = row
+    global countLine
     countLine.append(1)
     dictLine_Point.append([str(a["name"]),str(b["name"])])
-    print(a["name"] + " is perpendicular " + b["name"])
+    print(a["name"] + " is not connected with the line " + b["name"])
 
 # Define a relationship handler...
 dict1 = {}
@@ -191,6 +201,21 @@ def handle_three_points(row):
     a, b,c = row
     print(a["name"] + " and " +b["name"] + "and " + c["name"])
 #End Of Function
+
+def printTree():
+	print(" printing whole tree")
+	#Checking graph nodes by printing all nodes along with their relationship
+	query = "START a=node(*) MATCH a-[r]->b RETURN a,b,r"
+	cypher.execute(graph_db, query, row_handler=print_row)
+
+#EOF
+	
+def saveObjFigure(obj, triangleName):
+	print("saving obj of the figure ")
+	saveObj = []
+	saveObj.append(str(obj) + str(triangleName))
+#EOF
+
 
 list_right_triangles = []
 def getAllRightAngleTriangles():
@@ -506,6 +531,7 @@ def check_join_Existing_three_non_collinear_Points():
 	triangleName = node1["name"] + node2["name"] + node3["name"]
 	addTriangle(triangleName)
 
+	saveObjFigure("triangle", triangleName)
 	count_row = 0
 	return true
 #End Of Function
@@ -515,13 +541,13 @@ def check_join_Existing_line_existing_point_not_on_line():
 	print("Pick existing set of  point and line not connected to it")
 	query = "START b=node(*),a=node(*) MATCH b-[r?:CONTAIN]->a WHERE b.type = {A} AND a.type = {B}  AND r IS NULL RETURN a,b"
 	cypher.execute(graph_db, query, {"A" :"line","B":"point"}, row_handler=print_row_new)
-	global count
-	if count == 0: return False
+	global countLine
+	if len(countLine) == 0: return False
 
 	#Join this point with the end-points of the chosen line
 	randomSet = random.sample(dictLine_Point,1)
 	#This is for generating a new triangle different from previous one
-	if save_triangle_line_point.length > 0 :
+	if len(save_triangle_line_point) > 0 :
 		for randomSet in save_triangle_line_point:
 			randomSet = random.sample(dict_three_Point,1)
 	#End of if
@@ -533,14 +559,25 @@ def check_join_Existing_line_existing_point_not_on_line():
     	node2 = randomSet[0][1]
 
 	#Fill in the details of the calling function TODO
-	lineMane = "hjk"
+	p1 = getNewPointName()
+	lineName = randomSet[0][0] + p1
 	length = 10
 	ang1 = 10
 	ang2 = 30
 	ang3 = 40
 	ang4 = 50
-	node_triangle = "fdg"
+
+	#Getting the node of the triangle where this line can be added
+	triangleName = node1 + node2
+	triangleName1 = node2[0] + node1 + node2[1]
+	
+    	query = "START z=node(*) WHERE z.name={A} OR z.name = {B} RETURN z"
+    	data, metadata = cypher.execute(graph_db, query, {"A": triangleName1, "B":triangleName})
+    	node_triangle = data[0][0]
+    	print(node_triangle["name"])
+
 	addLineInTriangle(lineName, length, ang1, ang2,ang3,ang4,node_triangle)
+	saveObjFigure("triangle", triangleName)
 	count = 0
 	return true
 #End Of Function
@@ -548,7 +585,7 @@ def check_join_Existing_line_existing_point_not_on_line():
 
 
 def generate_join_three_new_points():
-	#Generate data for triangle generation
+	print(" Generate data for triangle generation ")
 	p1x = random.randint(1,100)
 	p1y = random.randint(1,100)
 	cord = {p1x, p1y}
@@ -597,8 +634,10 @@ def generate_join_three_new_points():
 	quesArray.append(ang1)
 	quesArray.append(ang2)
 	quesArray.append(ang3)
-	triangleName = "PQR" 
+	triangleName = getNewTriangleName() 
 	generateTriangle(quesArray, cordArray, triangleName,node_root)
+	saveObjFigure("triangle", triangleName)
+	print(" exiting from generate three new points function")
 #End Of Function
 
 
@@ -609,8 +648,8 @@ def addPointFig():
 	cypher.execute(graph_db, query, {"A" :"line","B":"point"}, row_handler=print_row_new)
 
 	#If above case fails, then
-	global count
-	if count != 0: 
+	global countLine
+	if len(countLine) != 0: 
 	    #Get the mid-point of the chosen line
 	    count = 0
 	    randomSet = random.sample(dictLine_Point,1)
@@ -657,7 +696,7 @@ def check_existing_line_point_not_on_line():
 	query = "START b=node(*),a=node(*) MATCH b-[r?:CONTAIN]->a WHERE b.type = {A} AND a.type = {B}  AND r IS NULL RETURN a,b"
 	cypher.execute(graph_db, query, {"A" :"line","B":"point"}, row_handler=print_row_new)
 
-	if len(count) == 0: return False
+	if count == 0: return False
 
 	#TODO Join this point with the mid-point of the chosen line
 	count = 0
@@ -704,9 +743,6 @@ def addObjFigure(geom_object):
 		print(" Inside addObjFigure, geom_object not defined ")
 #End of function
 
-def saveObjFigure(obj):
-	print("inside save obj figure ")
-#EOF
 	
 def generateObjFigure(geom_object, firstTime = 1, change_fig_not_possible = 0):
 	print("inside generateObjFigure obj is "+ geom_object)
@@ -714,17 +750,20 @@ def generateObjFigure(geom_object, firstTime = 1, change_fig_not_possible = 0):
 		if  firstTime == 1:
 		    addObjFigure(geom_object)
 		    firstTime = 0
-		    saveObjFigure(geom_object)
+		    printTree()
+		    #saveObjFigure(geom_object)
 		    break
 		else :
 			if  change_fig_not_possible == 1 :
 				#TODO addObjfigure which is different from the previous one
-				saveObjFigure(geom_object)
+				#saveObjFigure(geom_object)
+		    		printTree()
 				break
 			else :
 				changeObjFigure(geom_object)
-				saveObjFigure(geom_object)
+				#saveObjFigure(geom_object)
 				#TODO IF ALL CHANGES OVER make change_fig_not_possible = 1 **************
+		    		printTree()
 	print("exiting from generateObjFigure ")	
 #End of Function
 
@@ -750,6 +789,8 @@ def generateConceptFigure(concept, firstTime = 1, change_fig_not_possible = 0):
 	
 def generateFigure(geom_object, concept, theorem):
 	print("inside generateFigure function ")
+	generateObjFigure(geom_object)
+	print("Calling generateObject secong time ")
 	generateObjFigure(geom_object)
 	###########################generateConceptFigure(concept)
 	
