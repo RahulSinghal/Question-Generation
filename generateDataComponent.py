@@ -39,7 +39,7 @@ def getAllRightAngleTriangles():
 #End Of Function
 
 
-def getInput_OutputFromSide(selectedSide, originalSide, originalTriangle, input1, output1):
+def getInput_OutputFromSide(theorem, selectedSide, originalSide, originalTriangle, input1, output1):
 
     print("inside getInput_Output function")
 
@@ -82,16 +82,25 @@ def getInput_OutputFromSide(selectedSide, originalSide, originalTriangle, input1
 
     print("saveIndex is " + str(saveIndex) + " and saveIndex1 is " + str(saveIndex1))
     conversionDict[inputStr[saveIndex]] = inputStr1[saveIndex1]
+    
+    #First reach to the theorem asked , then go inside it to get the sides
+    if theorem == "pythagoras" :
+        query = "START a=node(*) MATCH a-[r:PYTHAGORAS]-b WHERE b.type = {A}  RETURN b"
+        data,metadata = cypher.execute(graph_db, query, {"A" :"triangle"})
+	node_triangle_temp = data[0]
+	print(node_triangle_temp["name"])
+    if theorem == "Has"
+	print("pythagoas theorem is not selected ")
 
     if input1 == 1:
 	print("Query for getting input for a given side from KD2")
-	query = "START a=node(*) MATCH a-[:INPUT]->b-[:CONTAIN]->c WHERE a.name = {A} RETURN c" 
-	data,metadata = cypher.execute(graph_db, query, {"A" :selectedSide})
+	query = "START a=node({B}) MATCH a-[:INPUT]->b-[:CONTAIN]->c WHERE a.name = {A} RETURN c" 
+	data,metadata = cypher.execute(graph_db, query, {"A" :selectedSide, "B" : node_triangle_temp.id})
     
     if output1 == 1:
 	print("Query for getting output for a given side from KD2")
-	query = "START a=node(*) MATCH a-[:OUTPUT]->b-[:CONTAIN]->c WHERE a.name = {A} RETURN c"
-	data,metadata = cypher.execute(graph_db, query, {"A" :selectedSide})
+	query = "START a=node({B}) MATCH a-[:OUTPUT]->b-[:CONTAIN]->c WHERE a.name = {A} RETURN c"
+	data,metadata = cypher.execute(graph_db, query, {"A" :selectedSide, "B": node_triangle_temp.id})
 
     #Randomly select one of the input
     print(" Printing query result of input/output")
@@ -128,7 +137,7 @@ def getInput_OutputFromSide(selectedSide, originalSide, originalTriangle, input1
 
 
 #Get 
-def getSideFromRelationship(rel, originalSide, originalObject):   
+def getSideFromRelationship(theorem,rel, originalSide, originalObject):   
     print("Inside getSideFromRelationship function")
     sideName = None 
 
@@ -151,36 +160,53 @@ def getSideFromRelationship(rel, originalSide, originalObject):
     side3 = originalObject[index3] + originalSide[0]
     side4 = originalObject[index3] + originalSide[1]
     
-    #Get the relations stored in data
-    if rel == "PERP" :
-    	query = "START a=node(*) MATCH a-[r:PERPENDICULAR]-b WHERE a.name = {A}  RETURN r"
-    elif rel == "HAS": 
-    	query = "START a=node(*) MATCH a-[r:HAS]-b WHERE a.name = {A}  RETURN r"
-    else :
-	print("given relationship not found ")
-    data,metadata = cypher.execute(graph_db, query, {"A" :originalSide})
-    count = 0
-    for row in data:
-	count = count +1
-    if count > 0 : _rel = "PERP"
-    else: _rel = "HYP"
-    rel1 = "PERP"
-    rel2 = "HYP"
+    #First reach to the theorem asked , then go inside it to get the sides
+    if theorem == "pythagoras" :
+        query = "START a=node(*) MATCH a-[r:PYTHAGORAS]-b WHERE b.type = {A}  RETURN b"
+        data,metadata = cypher.execute(graph_db, query, {"A" :"triangle"})
+	node_triangle_temp = data[0]
+	print(node_triangle_temp["name"])
 
-    #For time being commenting it TODO
-    #rel1 = "HAS_AS_PERP_SIDE"
-    #rel2 = "HAS_AS_HYP_SIDE"
-    if _rel == rel1:
-	options = {"AB","BC"}
-	index_ = random.randint(0, 1)
-	if index_ == 0:	sideName = "AB"
-	if index_ == 1:	sideName = "BC"
-    elif _rel == rel2:
-	sideName = "CA"
+        #Get the relations stored in data
+        if rel == "PERP" :
+    	    query = "START a=node({B}) MATCH a-[:HAS]-c-[r:PERPENDICULAR]-b WHERE b.name = {A}  RETURN r"
+        elif rel == "HAS": 
+    	    query = "START a=node({B}) MATCH a-[:HAS]-b WHERE b.name = {A}  RETURN r"
+        else :
+	    print("given relationship not found ")
+        data,metadata = cypher.execute(graph_db, query, {"A" :originalSide, "B":node_triangle_temp.id})
+        count = 0
+        for row in data:
+	    count = count +1
+        if count > 0 : _rel = "PERP"
+        else: _rel = "HYP"
+        rel1 = "PERP"
+        rel2 = "HYP"
+
+        #For time being commenting it TODO
+        #rel1 = "HAS_AS_PERP_SIDE"
+        #rel2 = "HAS_AS_HYP_SIDE"
+        if _rel == rel1:
+	    options = {"AB","BC"}
+	    index_ = random.randint(0, 1)
+	    if index_ == 0:	sideName = "AB"
+	    if index_ == 1:	sideName = "BC"
+        elif _rel == rel2:
+	    sideName = "CA"
+    #End of pythagoras theorem
+    else :
+	print("theorem selected is not pythagoras ")
     return sideName
     print("Exiting getSideFromRelationship function")
 #EndOfFunction
 
+def check_theorem_object_map(theorem, objName, objType):
+    print("inside check_theorem_object_map function ")
+    # This fucntion will check if the geom object can be used with the given theorem
+    # For example if a line is checked with pythagoras theorem, so it will check if it is a side of rt angle triangle
+    # Similarly for each theorem, a condition will be checked for each object
+    # This function would be called when you have given one data( say input data) and now you have to give more data, first check if the input can be used in other theorem or not
+#EOF
 
 theoremList = ["pythagorus", "inequality"]
 def generateData(theorem = None, num_questions = 1):
@@ -238,10 +264,10 @@ def generateData(theorem = None, num_questions = 1):
 		del dict1[rel]
 	   
 		#For input data
-		selectedSide = str(getSideFromRelationship(rel,originalSide,originalObject))
+		selectedSide = str(getSideFromRelationship(theorem,rel,originalSide,originalObject))
 		print("selected side is " + str(selectedSide))
 		if selectedSide :
-			getInput_OutputFromSide(selectedSide, originalSide, originalObject,1,0)
+			getInput_OutputFromSide(theorem,selectedSide, originalSide, originalObject,1,0)
 
 		#We have different options here, currently I am taking num_of_questions > 1 . WE can have options such as complex questions, interesting questions, For output data
 		num_questions = num_questions - 1
@@ -249,16 +275,17 @@ def generateData(theorem = None, num_questions = 1):
 			break
 		elif dict1.len() == 0:
 			theorem = random.sample(theoremList, 1)
+			#check_theorem_object_map(theorem, objName, objType) #For checking if the obj can be used in other theorem
 			continue
 		else:
 			rel1 = random.choice(dict1.keys())
 			print(rel1)
 			originalSide = dict1[rel1]
 			originalObject = dict2[rel1]
-			selectedSide = str(getSideFromRelationship(rel1,originalSide, originalObject))
+			selectedSide = str(getSideFromRelationship(theorem,rel1,originalSide, originalObject))
 			print("selected side is " + str(selectedSide))
 			if selectedSide :
-				getInput_OutputFromSide(selectedSide, originalSide,originalObject,0,1)
+				getInput_OutputFromSide(theorem,selectedSide, originalSide,originalObject,0,1)
 				num_questions = num_questions - 1
 				if num_questions == 0 :
 					break
