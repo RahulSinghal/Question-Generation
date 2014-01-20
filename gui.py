@@ -104,11 +104,12 @@ class Example(wx.Frame):
 	dc = wx.PaintDC(e.GetEventObject())
         #dc.Clear()
         dc.SetPen(wx.Pen(wx.BLACK, 4))
-        dc.DrawLine(200, 200, 500, 500) 
+        #dc.DrawLine(200, 200, 500, 500) 
 
 	#Calling this function to start algorithm for question generation
-	generateQuestion(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
+	generateQuestion(dc, geom_object, geom_concept, geom_theorem, geom_num_of_ques)
 	#passArg(geom_object, geom_concept, geom_theorem, geom_num_of_ques)
+
 
 def main():
     
