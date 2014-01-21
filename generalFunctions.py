@@ -78,11 +78,11 @@ def angle_between_lines(pt1, pt2,pt3,pt4):
     return 10
 #End Of Function
 
-p1 = getNewPointName()
-p2 = getNewPointName()
-p3 = getNewPointName()
-triangleName = p1+p2+p3
-print(triangleName)
+#p1 = getNewPointName()
+#p2 = getNewPointName()
+#p3 = getNewPointName()
+#triangleName = p1+p2+p3
+#print(triangleName)
 
 def getNewTriangleName():
 	p1 = getNewPointName()
@@ -345,7 +345,7 @@ def addPerpendicularAngle(lineName1, lineName2):
 #End Of Function
 
 def addPointOnLine(pointName,cordx,cordy,lineName, line1Length, line2Length,node_triangle):
-	print("Inside addPointOnLine function and lineName is "+ lineName)
+	print("Inside addPointOnLine function and lineName is "+ lineName + " and pointName is "+pointName)
     
 	#Getting the node of line for making collinear relationship
 	query = "START z=node(*) WHERE z.name={A} AND z.type = {B} RETURN z"
@@ -551,11 +551,13 @@ def addLineInFig(firstTime = 1):
 
 def check_join_Existing_three_non_collinear_non_connected_Points():
 
-	print("Pick existing set of three points which are not connected")
+	print("Pick existing set of three non collinear points which are not connected")
 	query = "START b=node(*),a=node(*),c=node(*) MATCH b-[r?:CONNECTED]-a, b-[s?:CONNECTED]-c,c-[t?:CONNECTED]-a WHERE NOT(a = b) AND NOT(b = c) AND NOT(a = c) AND  b.type = {B} AND a.type = {B} AND c.type = {B} AND t IS NULL AND s IS NULL AND r IS NULL  RETURN a,b,c"
 	cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_three_points_row)
 	global count_row
-	if count_row == 0:return False
+	if count_row == 0:
+		print(" Not found 3 points, hence exiting from this function")
+		return False
 
 	#Join these points and add info to the triangle TODO  (Please fill the values of angle and length in the below code)
 	
@@ -592,37 +594,78 @@ def check_join_Existing_three_non_collinear_non_connected_Points():
 
 save_triangle_line_point = []
 def check_join_Existing_line_existing_non_connected_point_not_on_line():
-	print("Pick existing set of  point and line not connected to it")
-	query = "START b=node(*),a=node(*),c=node(*) MATCH b-[CONNECTED]-a, b-[s?:CONNECTED]-c,c-[t?:CONNECTED]-a WHERE NOT(a = b) AND NOT(b = c) AND NOT(a = c) AND  b.type = {B} AND a.type = {B} AND c.type = {B} AND t IS NULL AND s IS NULL  RETURN a,b,c"
-	cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_three_points_row)
+	print("Pick existing set of a point and line connected to one end but not connected to other end")
 	global count_row
-	if count_row == 0:return False
-
-	randomSet = check_saveObjFigure("Triangle_Line_Point")
-    	print(" randomset of line and point chosen is ")
-    	print( "selectedPoint is " +randomSet[0][0])
-    	print( "selectedLine is " +randomSet[0][1])
-    	node1 = randomSet[0][0]
-    	node2 = randomSet[0][1]
-
-	#Fill in the details of the calling function TODO
-	lineName1 = node1 + node2[0]
-	lineName2 = node1 + node2[1]
-	triangleName = node1 + node2
-	length = 10
-	ang1 = 10
-	ang2 = 30
-	ang3 = 40
-	ang4 = 50
-
-	quesArray = [10,10,10,20,30,40]
-	cordArray = [10,10,20,20,30,30]
-	generateTriangle(quesArray, cordArray, triangleName,node_root)
-
-	#addLineInTriangle(lineName1, length, ang1, ang2,ang3,ang4,node_triangle)
-	#addLineInTriangle(lineName2, length, ang1, ang2,ang3,ang4,node_triangle)
+	global dict_three_point
 	count_row = 0
-	return True
+	dict_three_point = []
+	query = "START b=node(*),a=node(*),c=node(*) MATCH b-[s?:CONNECTED]-c, a-[:CONNECTED]-b, a-[:CONNECTED]-c WHERE NOT(a = b) AND NOT(b = c) AND NOT(a = c) AND  b.type={B} AND a.type={B} AND c.type={B} AND s IS NULL  RETURN c,b"
+	cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_row_new)
+	#cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_three_points_row)
+	if count_row == 0:
+		print("NOT found a point and a line not connected to it, hence checking other case where point is not connected to both end points")
+		#return False
+	
+		print("Pick existing set of a point and line not connected to both ends ")
+		query = "START b=node(*),a=node(*),c=node(*) MATCH b-[:CONNECTED]-a, b-[s?:CONNECTED]-c,c-[t?:CONNECTED]-a WHERE NOT(a = b) AND NOT(b = c) AND NOT(a = c) AND  b.type = {B} AND a.type = {B} AND c.type = {B} AND t IS NULL AND s IS NULL  RETURN a,b,c"
+		cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_three_points_row)
+		#global count_row
+		if count_row == 0:
+			print(" not found a point and a line not connected to it, hence exiting")
+			return False
+
+		randomSet = check_saveObjFigure("Triangle_Line_Point")
+    		print(" randomset of line and point chosen is ")
+    		print( "selectedPoint is " +randomSet[0][0])
+    		print( "selectedLine is " +randomSet[0][1])
+    		node1 = randomSet[0][0]
+    		node2 = randomSet[0][1]
+
+		#Fill in the details of the calling function TODO
+		lineName1 = node1 + node2[0]
+		lineName2 = node1 + node2[1]
+		triangleName = node1 + node2
+		length = 10
+		ang1 = 10
+		ang2 = 30
+		ang3 = 40
+		ang4 = 50
+
+		quesArray = [10,10,10,20,30,40]
+		cordArray = [10,10,20,20,30,30]
+		generateTriangle(quesArray, cordArray, triangleName,node_root)
+
+		#addLineInTriangle(lineName1, length, ang1, ang2,ang3,ang4,node_triangle)
+		#addLineInTriangle(lineName2, length, ang1, ang2,ang3,ang4,node_triangle)
+		count_row = 0
+		return True
+	else:
+		print("found a line and a point connected to one end only")
+		randomSet = check_saveObjFigure("Triangle_Line_Point")
+    		print(" randomset of line and point chosen is ")
+    		print( "selectedPoint is " +randomSet[0][0])
+    		print( "selectedLine is " +randomSet[0][1])
+    		node1 = randomSet[0][0]
+    		node2 = randomSet[0][1]
+
+		#Fill in the details of the calling function TODO
+		lineName1 = node1 + node2[0]
+		lineName2 = node1 + node2[1]
+		triangleName = node1 + node2
+		length = 10
+		ang1 = 10
+		ang2 = 30
+		ang3 = 40
+		ang4 = 50
+
+		#Get the triangle node
+		query = "START z=node(*) WHERE z.type={A} AND z.name={B} RETURN z"
+		data, metadata = cypher.execute(graph_db, query, {"A": "triangle","B":triangleName})
+    		for row in data:
+            		print(row[0]["name"])
+	    		node_triangle = row[0]
+		addLineInTriangle(lineName1, length, ang1, ang2,ang3,ang4,node_triangle)
+		return True		
 #End Of Function
 
 
@@ -686,22 +729,27 @@ def generate_join_three_new_points():
 
 save_point = []
 def addPointFig():
-	print("Find an existing line not having existing mid point")
+	print("Inside adding point, find an existing line not having existing mid point")
+	global countLine
+	global dictLine_Point
+	countLine = []
+	dictLine_Point = []
 	query = "START c=node(*), b=node(*),a=node(*) MATCH c-[:KD1]->d-[:HAS]->b-[r?:MIDPOINT]->a,b-[s?:CONTAIN]-a WHERE b.type = {A} AND a.type = {B}  AND r IS NULL AND s IS NULL RETURN a,b"
 	cypher.execute(graph_db, query, {"A" :"line","B":"point"}, row_handler=print_row_new)
 
 	#If above case fails, then
-	global countLine
 	if len(countLine) != 0: 
 	    #Get the mid-point of the chosen line
 	    randomSet = random.sample(dictLine_Point,1)
-	    #This is for generating a new triangle different from previous one
+	    #####TODO This is for generating a new triangle different from previous one
+	    '''
 	    if len(save_point) > 0 :
 		for randomSet in save_point:
 			randomSet = random.sample(dict_three_Point,1)
 		#End of if
 		save_point.append(randomSet)
-            print(" randomset of line and point chosen is ")
+	    '''
+            print(" randomset of line chosen is ")
             print( "selectedPoint is " +randomSet[0][0])
             print( "selectedLine is " +randomSet[0][1])
 	    
@@ -727,9 +775,9 @@ def addPointFig():
 	    #addPointOnLine(pointName,cordx,cordy,line, line1Length, line2Length,node_triangle):
 	    p1 = getNewPointName()
 	    addPointOnLine(p1, cord3x, cord3y, randomSet[0][1], 10,20,triangle)
-	    countLine = 0
+	    countLine = []
 	else:
-		print("need to think ....this case should not arrive soooooooooon")
+		print("need to think ....this case should not arrive soooooooooon except for first time")
 	return True
 #End Of Function
 
@@ -751,7 +799,7 @@ def check_existing_line_point_not_on_line():
 
 
 def check_join_Existing_line_new_point_not_on_line():
-	print("Inside check_join_Existing_line_new_point_not_on_line function")
+	print("Adding a new point on a random line inside check_join_Existing_line_new_point_not_on_line function")
 	addPointFig()
 	check_join_Existing_line_existing_non_connected_point_not_on_line()
 #End Of Function
@@ -759,12 +807,12 @@ def check_join_Existing_line_new_point_not_on_line():
 
 
 def addTriangleFig(firstTime):
+	if firstTime == 1:
+	     generate_join_three_new_points() 
+	     return 1
 	if check_join_Existing_three_non_collinear_non_connected_Points() == True :return 1
 	elif check_join_Existing_line_existing_non_connected_point_not_on_line() == True:return 1
 	elif check_join_Existing_line_new_point_not_on_line() == True:return 1
-	elif firstTime == 1:
-	     generate_join_three_new_points() 
-	     return 1
 	else :
 		    print("no more triangle can be added")
 		    return 0
@@ -823,12 +871,53 @@ def generateConceptFigure(concept, firstTime = 1, change_fig_not_possible = 0):
 			#TODO IF ALL CHANGES OVER make change_fig_not_possible = 1
 	print(" exiting from generateConceoptFigure ")
 #End of Function
+
+point_Name_Cord_Map = {}
+def drawTree(dc):
+	print("entering into drawTree function ")
+	dc.SetPen(wx.Pen(wx.BLACK, 4))
+	#Pick all the points and save their cordinates 
+	query = "START z=node(*) WHERE z.type={A} RETURN z"
+	data, metadata = cypher.execute(graph_db, query, {"A": "point"})
+    	for row in data:
+            print(row[0]["name"])
+	    pointName = row[0]["name"] 
+	    pointCordx = row[0]["cordx"]
+	    pointCordy = row[0]["cordy"]
+	    global point_Name_Cord_Map 
+	    cord_list = [pointCordx, pointCordy]
+	    point_Name_Cord_Map[pointName] = cord_list
+	    print(point_Name_Cord_Map[pointName])
+	    node_point = row[0]
+
+	print(point_Name_Cord_Map)
+
+	query = "START z=node(*) WHERE z.type={A} RETURN z"
+	data, metadata = cypher.execute(graph_db, query, {"A": "line"})
+    	for row in data:
+            print(row[0])
+            print(row[0]["name"])
+	    pointName1 = row[0]["name"][0] 
+	    pointName2 = row[0]["name"][1] 
+	    cordx1 = point_Name_Cord_Map[pointName1][0]
+	    cordy1 = point_Name_Cord_Map[pointName1][1]
+	    cordx2 = point_Name_Cord_Map[pointName2][0]
+	    cordy2 = point_Name_Cord_Map[pointName2][1]
+	    print(cordx1)
+	    print(cordy1)
+	    print(cordx2)
+	    print(cordy2)
+            dc.DrawLine(int(cordx1), int(cordy1), int(cordx2), int(cordy2))
+#EOF
+
 	
-def generateFigure(geom_object, firstTime, concept, theorem):
+def generateFigure(dc,geom_object, firstTime, concept, theorem):
 	print("inside generateFigure function ")
 	if generateObjFigure(geom_object, firstTime) == True :
+		drawTree(dc)
 		print("Calling generateObject secong time ******************")
-		generateObjFigure(geom_object, firstTime)
+		generateObjFigure(geom_object, 0) #Passing firstTime = 0
+		drawTree(dc)
 		######################generateConceptFigure(concept)
 		#####################writeFig_Data_to_File()
 		return True
@@ -837,35 +926,6 @@ def generateFigure(geom_object, firstTime, concept, theorem):
 		return False
 	print(" exiting from generateFigure ")
 #EndOfFunction
-point_Name_Cord_Map = {}
-def drawTree(dc):
-	dc.SetPen(wx.Pen(wx.BLACK, 4))
-	#Pick all the points and save their cordinates 
-	query = "START z=node(*) WHERE z.type={A} RETURN z"
-	data, metadata = cypher.execute(graph_db, query, {"A": "point"})
-    	for row in data:
-            print(row[0]["name"])
-	    pointName = row[0]["name"] 
-	    pointCordx = row[0]["Cordx"]
-	    pointCordy = row[0]["Cordy"]
-	    global point_Name_Cord_Map 
-	    cord_list = [pointCordx, pointCordy]
-	    point_Name_Cord_Map[pointName] = cord_list
-	    node_point = row[0]
-
-	query = "START z=node(*) WHERE z.type={A} RETURN z"
-	data, metadata = cypher.execute(graph_db, query, {"A": "line"})
-    	for row in data:
-            print(row[0][0])
-            print(row[0][0]["name"])
-	    pointName1 = row[0][0]["name"] 
-	    pointName2 = row[0][1]["name"] 
-	    cordx1 = point_Name_Cord_Map[pointName1][pointCordx]
-	    cordy1 = point_Name_Cord_Map[pointName1][pointCordy]
-	    cordx2 = point_Name_Cord_Map[pointName2][pointCordx]
-	    cordy2 = point_Name_Cord_Map[pointName2][pointCordy]
-            dc.DrawLine(cordx1, cordy1, cordx2, cordy2)
-#EOF
 
 #This function is being called from gui.py
 def generateQuestion(dc, obj, concept, theorem, num_questions, nowGenerateFigure = 1):
@@ -874,7 +934,7 @@ def generateQuestion(dc, obj, concept, theorem, num_questions, nowGenerateFigure
 	firstTime  = 1
 	while num_questions > 0:
 		if nowGenerateFigure == 1:
-			canGenerateFigure = generateFigure(obj, firstTime, concept = None, theorem = None)
+			canGenerateFigure = generateFigure(dc,obj, firstTime, concept = None, theorem = None)
 			if canGenerateFigure == False :
 				print(" exiting from question generation as no more obj can be added ")
 				return
@@ -999,7 +1059,7 @@ def slope(pt1, pt2):
 temp1 = [0, 0]
 cord1 = [0, 1]
 ang = slope(temp1,cord1)*180/math.pi
-print (ang)
+#print (ang)
 
 
 #Defining new terms without testing
