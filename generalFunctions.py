@@ -472,7 +472,7 @@ def addLineInTriangle(lineName, length, ang1, ang2,ang3,ang4,node_triangle):
 
 save_triangle = []
 def addTriangle(triangleName):
-    print("Inside addTRiangleName function")
+    print("Inside addTriangleName function")
 	
     #This function will save triangle which will help in checking changeTriangle
     #save_triangle.append(triangleName)
@@ -565,6 +565,10 @@ def addLineInFig(firstTime = 1):
 def check_join_Existing_three_non_collinear_non_connected_Points():
 
 	print("Pick existing set of three non collinear points which are not connected")
+	global count_row
+	global dict_three_point
+	count_row = 0
+	dict_three_point = []
 	query = "START b=node(*),a=node(*),c=node(*) MATCH a-[r?:CONNECTED]-b, b-[s?:CONNECTED]-c,c-[t?:CONNECTED]-a WHERE NOT(a = b) AND NOT(b = c) AND NOT(a = c) AND  b.type = {B} AND a.type = {B} AND c.type = {B} AND t IS NULL AND s IS NULL AND r IS NULL  RETURN a,b,c"
 	cypher.execute(graph_db, query, {"B":"point"}, row_handler=print_three_points_row)
 	global count_row
@@ -677,7 +681,9 @@ def check_join_Existing_line_existing_non_connected_point_not_on_line():
 		triangleName = None
 		#Get the triangle node
                 query = "START z=node(*) MATCH z-[:INDIRECTLY_HAS]-a-[:CONTAIN]-b WHERE z.type={A} AND b.type={C} AND b.name={B} RETURN z"
-                data, metadata = cypher.execute(graph_db, query, {"A": "triangle","B":node3,"C":"point"})
+                data, metadata = cypher.execute(graph_db, query, {"A": "triangle","B":node1,"C":"point"})
+		if len(data) == 0:
+                	data, metadata = cypher.execute(graph_db, query, {"A": "triangle","B":node3,"C":"point"})
                 for row in data:
                 	print(row[0])
                 	node_triangle = row[0]
@@ -934,7 +940,7 @@ def drawTree(dc):
 	    #print(cordy1)
 	    #print(cordx2)
 	    #print(cordy2)
-            dc.DrawLine(int(cordx1), int(cordy1), int(cordx2), int(cordy2))
+            dc.DrawLine(400+int(cordx1), 400+int(cordy1), 400+int(cordx2), 400+int(cordy2))
 #EOF
 
 	
@@ -948,6 +954,9 @@ def generateFigure(dc,geom_object, firstTime, concept, theorem):
 			print("Calling generateObject third time ******************")
 			if generateObjFigure(geom_object, 0) == True:#Passing firstTime = 0
 				drawTree(dc)
+				print("Calling generateObject fourth time ******************")
+				if generateObjFigure(geom_object, 0) == True:#Passing firstTime = 0
+					drawTree(dc)
 		######################generateConceptFigure(concept)
 		#####################writeFig_Data_to_File()
 		return True
