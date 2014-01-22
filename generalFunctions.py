@@ -220,35 +220,125 @@ def printTree():
 	cypher.execute(graph_db, query, row_handler=print_row)
 
 #EOF
-	
+
+stepsStack = []	
+save_triangle_three_new_points = []
+save_triangle_line_point_connected_one_end_point = []
+save_triangle_line_point_not_connected_both_end_points = []
+save_triangle_existing_three_points = []
 def check_saveObjFigure(objType, objName = None):
 	print("saving obj of the figure ")
 	global dict_three_point
-	if objType == "Triangle":
+	global stepsStack
+
+	if objType == "Triangle_three_existing_points":
 	        randomSet = random.sample(dict_three_point,1)
 		#This is for generating a new triangle different from previous one
-        	if len(save_triangle) > 0 :
-                	for randomSet in save_triangle:
-                        	randomSet = random.sample(dict_three_Point,1)
+		global save_triangle_existing_three_points
+        	if len(save_triangle_existing_three_points) > 0 :
+                	for randomSet in save_triangle_existing_three_points:
+                        	randomSet = random.sample(dict_three_point,1)
         	#End of inner if
-        	save_triangle.append(randomSet)
+
+		#It is done to save each step which can later be emptied
+		temp = {"triangle",randomSet[0][0]+randomSet[0][1]+randomSet[0][2]}
+		stepsStack.append(temp)
+
+        	save_triangle_existing_three_points.append(randomSet)
 		return randomSet
 	#End of outer if
-	if objType == "Triangle_Line_Point":
+	if objType == "Triangle_line_point_connected_one_end_point":
 		randomSet = random.sample(dict_three_point,1)
 		#This is for generating a new triangle different from previous one
-        	if len(save_triangle_line_point) > 0 :
-                	for randomSet in save_triangle_line_point:
+        	global save_triangle_line_point_connected_one_end_point
+        	if len(save_triangle_line_point_connected_one_end_point) > 0 :
+                	for randomSet in save_triangle_line_point_connected_one_end_point:
                         	randomSet = random.sample(dict_three_point,1)
         	#End of if
-        	save_triangle_line_point.append(randomSet)
+
+		#It is done to save each step which can later be emptied
+		temp = {"line",randomSet[0][0]+randomSet[0][1]}
+		stepsStack.append(temp)
+		temp = {"triangle",randomSet[0][0]+randomSet[0][1]+ randomSet[0][2]}
+		stepsStack.append(temp)
+
+        	save_triangle_line_point_connected_one_end_point.append(randomSet)
+		return randomSet
+	#End of outer if
+	if objType = "Triangle_line_point_not_connected_both_ends":
+		randomSet = random.sample(dict_three_point,1)
+		#This is for generating a new triangle different from previous one
+		global save_triangle_line_point_not_connected_both_end_points
+        	if len(save_triangle_line_point_not_connected_both_end_points) > 0 :
+                	for randomSet in save_triangle_line_point_not_connected_both_end_points:
+                        	randomSet = random.sample(dict_three_point,1)
+        	#End of if
+
+		#It is done to save each step which can later be emptied
+		temp = {"line",randomSet[0][0]+randomSet[0][1]}
+		stepsStack.append(temp)
+		temp1 = {"line1",randomSet[0][0]+randomSet[0][2]}
+		stepsStack.append(temp1)
+		temp = {"triangle",randomSet[0][0]+randomSet[0][1]+ randomSet[0][2]}
+		stepsStack.append(temp)
+
+        	save_triangle_line_point_not_connected_both_end_points.append(randomSet)
 		return randomSet
 	#End of outer if
 	if objType == "Triangle_three_new_points":
-		#save_line.append(objName)
+		global save_triangle_three_new_points
+		save_triangle_three_new_points.append(objName)
+
+		#It is done to save each step which can later be emptied
+		temp = {"point",objName[0]}
+		stepsStack.append(temp)
+		temp = {"point",objName[1]}
+		stepsStack.append(temp)
+		temp = {"point",objName[2]}
+		stepsStack.append(temp)
+		temp = {"triangle",objName}
+		stepsStack.append(temp)
+
 		return 
+	#End of outer if
+	if objType == "Line_two_existing_points":
+	        randomSet = random.sample(dictPoint_Point,1)
+		#This is for generating a new triangle different from previous one
+		global save_line_existing_two_points
+        	if len(save_line_existing_two_points) > 0 :
+                	for randomSet in save_line_existing_two_points:
+                        	randomSet = random.sample(dictPoint_Point,1)
+        	#End of inner if
+
+		#It is done to save each step which can later be emptied
+		temp = {"line",randomSet[0][0]+randomSet[0][1]}
+		stepsStack.append(temp)
+
+        	save_line_existing_two_points.append(randomSet)
+		return randomSet
+	#End of outer if
 #EOF
 
+def emptyStack():
+	global stepsStack
+	count = len(stepsStack)
+	while count > 0 :
+		if stepsStack[count -1][0] == "line" :
+			print(" deleting line "+ stepsStack[count - 1][1])
+			removeLine_Fig(stepsStack[count - 1][1])
+		elif stepsStack[count -1][0] == "point" :
+			print(" deleting point "+ stepsStack[count - 1][1])
+			removePoint_Fig(stepsStack[count - 1][1])
+		elif stepsStack[count -1][0] == "triangle" :
+			print(" deleting triangle"+ stepsStack[count - 1][1])
+			removeTriangle_Fig(stepsStack[count - 1][1])
+		else:
+			print("error is there")
+			break
+		count = count - 1
+	#End of while loop
+
+#EOF
 
 list_right_triangles = []
 def getAllRightAngleTriangles():
@@ -526,7 +616,6 @@ def print_three_points_row(row):
 	print(a["name"] +" and "+ b["name"] + " and "+c["name"]) 
 
 
-save_line_two_non_connecting_Points = []
 def check_join_two_non_connecting_Points():
 	print("Pick existing set of two points which are not connected")
 	global dictPoint_Point
@@ -538,17 +627,9 @@ def check_join_two_non_connecting_Points():
 		return False
 
 	#Join these two points
-	randomSet = random.sample(dictPoint_Point,1)
+	randomSet = check_saveObjFigure("Line_two_existing_points")
+	#randomSet = random.sample(dictPoint_Point,1)
 
-	'''
-	#This is for generating a new triangle different from previous one
-	if len(save_line_two_non_connecting_Points) > 0 :
-		global save_line
-		for randomSet in save_line:
-			randomSet = random.sample(dict_three_point,1)
-	#End of if
-	'''
-	save_line_two_non_connecting_Points.append(randomSet)
     	print(" randomset of line and point chosen is ")
     	print( "first selectedPoint is " + randomSet[0][0]["name"])
     	print( "second selectedPoint is " +randomSet[0][1]["name"])
@@ -591,7 +672,7 @@ def check_join_Existing_three_non_collinear_non_connected_Points():
 
 	#Join these points and add info to the triangle TODO  (Please fill the values of angle and length in the below code)
 	
-	randomSet = check_saveObjFigure("Triangle")
+	randomSet = check_saveObjFigure("Triangle_three_existing_points")
     	print( "first selectedPoint is " +randomSet[0][0])
     	print( "second selectedPoint is " +randomSet[0][1])
     	print( "third selectedPoint is " +randomSet[0][2])
@@ -654,7 +735,7 @@ def check_join_Existing_line_existing_non_connected_point_not_on_line():
 			print(" not found a point and a line not connected to it, hence exiting")
 			return False
 
-		randomSet = check_saveObjFigure("Triangle_Line_Point")
+		randomSet = check_saveObjFigure("Triangle_line_point_not_connected_both_ends")
     		print(" randomset of line and point chosen is "+ randomSet[0])
     		print( "selectedPoint is " +randomSet[0][0])
     		print( "selectedLine is " +randomSet[0][1])
@@ -682,7 +763,7 @@ def check_join_Existing_line_existing_non_connected_point_not_on_line():
 	else:
 		printTree()
 		print("found a line and a point connected to one end only")
-		randomSet = check_saveObjFigure("Triangle_Line_Point")
+		randomSet = check_saveObjFigure("Triangle_line_point_connected_one_end_point")
     		print( "selectedPoint is " +randomSet[0][0])
     		print( "selectedLine is " +str(randomSet[0][1]+ randomSet[0][2]))
     		node1 = randomSet[0][0]
@@ -1080,15 +1161,21 @@ def runCHR():
 
 def removeTriangle_Fig(triangleName):
 	print("Inside removeTriangle_Fig function")
-	oldPerp_Line = triangleName[0] + triangleName[1]
-	removeLine_Fig(oldPerp_Line)
-	oldPerp_Line = triangleName[1] + triangleName[2]
-	removeLine_Fig(oldPerp_Line)
-	oldPerp_Line = triangleName[0] + triangleName[2]
-	removeLine_Fig(oldPerp_Line)
-	#del all the relations of this node with other nodes from KDI **************
-	query = "START a=node(*) MATCH a-[r]-() WHERE a.type={A} AND a.name={B}  DELETE a,r"
+	#oldPerp_Line = triangleName[0] + triangleName[1]
+	#removeLine_Fig(oldPerp_Line)
+	#oldPerp_Line = triangleName[1] + triangleName[2]
+	#removeLine_Fig(oldPerp_Line)
+	#oldPerp_Line = triangleName[0] + triangleName[2]
+	#removeLine_Fig(oldPerp_Line)
+	
+	#del all the relations of this node with other line
+	query = "START a=node(*) MATCH a-[r:HAS]-() , a-[r:INDIRECTLY_HAS]-() WHERE a.type={A} AND a.name={B}  DELETE r"
     	cypher.execute(graph_db, query,{"A": "triangle", "B":triangleName})
+
+	#del kd1 relation of this node including this node
+	query = "START a=node(*) MATCH a-[r:KD1]-() WHERE a.type={A} AND a.name={B}  DELETE a,r"
+    	cypher.execute(graph_db, query,{"A": "triangle", "B":triangleName})
+	print("Exiting removeTriangle_Fig function")
 #End Of Function
 
 # Define a row handle for handline line conatining two points...
@@ -1113,19 +1200,46 @@ def removeLine_Fig(oldPerp_Line):
 
 	#TODO DELETE line FROM GRAPH DATABASE and check if it is a part of a triangle, remove triangle also
 	print("Query for removing line")	
-	query = "START a=node(*), b=node(*), c=node(*)  MATCH c-[:CONTAIN]-a-[:CONNECTED]-b,c-[:CONTAIN]-b WHERE a.type={A} AND a.name={B} AND b.type={A} AND b.name={C} AND c.type={D} DELETE c"
+	query = "START a=node(*), b=node(*), c=node(*)  MATCH c-[r:CONTAIN]-a-[s:CONNECTED]-b,c-[:CONTAIN]-b WHERE a.type={A} AND a.name={B} AND b.type={A} AND b.name={C} AND c.type={D} DELETE r,s"
     	cypher.execute(graph_db, query,{"A": "point", "B":oldPerp_Line[1], "C":oldPerp_Line[1],"D":"line"})
 	
-	removePoint_Fig(pointNode1)
-	removePoint_Fig(pointNode2)
-	#del this node from KD1	
+	#get the parent node of this node
+	query = "START a=node(*), b=node({B}) MATCH a-[r:HAS]-b WHERE b.type={A} RETURN a"
+    	data,Metadata = cypher.execute(graph_db, query,{"A": "line", "B":node_line1.id})
+	node_triangle = data[0][0]
+
+	#del HAS relation of this node including this node
+	query = "START a=node(*), b=node({B}) MATCH a-[r:HAS]-b WHERE b.type={A}  DELETE b,r"
+    	cypher.execute(graph_db, query,{"A": "line", "B":node_line1.id})
+	
+	removeTriangle_Fig(node_triangle["name"])
+
+	#removePoint_Fig(pointNode1)
+	#removePoint_Fig(pointNode2)
+	print("Exiting removeLine_Fig")	
 #End Of Function
 
-def removePoint_Fig(pointNode):
+def removePoint_Fig(pointName):
 	print("inside removePoint_Fig function")
-	#del all the relations of this node with other nodes from KDI **************
-	query = "START a=node(*) MATCH a-[r]-() WHERE a.type={A} AND a.name={B}  DELETE a,r"
-    	cypher.execute(graph_db, query,{"A": "point", "B":pointNode["name"]})
+
+	#get the node of this point
+	query = "START a=node(*) WHERE a.type={A} AND a.name={B} RETURN a"
+    	data,Metadata = cypher.execute(graph_db, query,{"A": "point", "B":pointName})
+	node_point = data[0][0]
+
+	#get all the lines connected this node from KD1 
+	query = "START a=node(*),b=node(*) MATCH a-[r:CONTAIN]-b WHERE a.type={A} AND b.type={C} AND b.name={B}  RETURN a"
+    	data,Metadata = cypher.execute(graph_db, query,{"A": "line", "B":pointNode["name"], "C":"point"})
+
+	#deleting all the line nodes containing this point node
+	for row in data:
+		print(row[0]["name"])
+		removeLine_Fig(row[0])
+
+	#Deleting the point node
+	query = "START a=node({A}) WHERE a.type={C} AND a.name={B}  DELETE a"
+    	cypher.execute(graph_db, query,{"A": node_point.id, "B":pointNode["name"], "C":"point"})
+		
 #End Of Function
 
 
