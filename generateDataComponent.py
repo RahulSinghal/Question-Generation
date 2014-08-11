@@ -4,21 +4,14 @@ from __future__ import print_function
 
 # Import Neo4j modules
 from py2neo import neo4j, cypher
+from macro import *
+from cypher_handling_functions import *
 #from kd2_new import graph_db, node_root
 
-# Define a relationship handler...
-dict1 = {}
-dict2 = {}
-def handle_relationship(row):
-    a, b,r = row
-    tempStr = str(a["name"] + str(r.type) + str(b["name"]))
-    dict1[tempStr] = a["name"]
-    dict2[tempStr] = b["name"]
-    print(a["name"] + " has relationship " + r.type + " with " + b["name"])
-#End of function
 
-list_right_triangles = []
-def getAllRightAngleTriangles():
+# Get all the right angles in a given configuration used in pythagorean theorem
+#list_right_triangles = []
+def getAllRightAngleTriangles(list_right_triangles, ):
     print("Inside getAllRightAngleTriangle function")
     #Get all nodes with relationship ANGLE and having value 90
 
@@ -36,12 +29,13 @@ def getAllRightAngleTriangles():
         list_right_triangles.append(temp3)
         #print("one of the right angle triangle is "+temp3["name"])
     print("Exiting getAllRightAngleTriangle function")
+    return list_right_triangles
 #End Of Function
 
-
+# Get input and output options from the given side
 def getInput_OutputFromSide(theorem, selectedSide, originalSide, originalTriangle, input1, output1):
 
-    print("inside getInput_Output function")
+    print("inside getInput_OutputFromSide function")
 
     conversionDict = {}
     conversionDict[selectedSide[0]] = originalSide[0]
@@ -89,7 +83,7 @@ def getInput_OutputFromSide(theorem, selectedSide, originalSide, originalTriangl
         data,metadata = cypher.execute(graph_db, query, {"A" :"triangle"})
 	node_triangle_temp = data[0]
 	print(node_triangle_temp["name"])
-    if theorem == "Has"
+    if theorem == "Inequlaity" :
 	print("pythagoas theorem is not selected ")
 
     if input1 == 1:
@@ -112,31 +106,33 @@ def getInput_OutputFromSide(theorem, selectedSide, originalSide, originalTriangl
     print (array)
     node = random.sample((array),  1)
     str1 = ''.join(node)
- 
+	
+    input_list = []
     print("node selected is " + str1)
     print("Query for getting exact I/O for a given side from KD2")
     query = "START a=node(*) MATCH a-[:NEEDS]->b WHERE a.name = {A} RETURN b"
     data,metadata = cypher.execute(graph_db, query, {"A" :str1})
     for row in data:
-	print("printing first row")
-	print(row[0]["name"])
-	resultName = str(row[0]["name"])
+		print("printing first row")
+		print(row[0]["name"])
+		resultName = str(row[0]["name"])
+		input_list.append(str(row[0]["name"]))
+		
+	#TODO same thing as above, for storing output in output_list
 
-	conversionString  = conversionDict[resultName[0]] + conversionDict[resultName[1]]
-	conversionString1 = conversionDict[resultName[1]] + conversionDict[resultName[0]]
-	print("Get the values of the length or the angle from the fig graph")
-	query = "START z=node(*) WHERE z.name={A} OR z.name = {B} RETURN z"
-	data, metadata = cypher.execute(graph_db, query, {"A": conversionString,"B": conversionString1})
-	temp3 = data[0][0]
-	print(temp3["value"])
-	writeToFile(conversionString, "length", None, temp3["value"])
+    conversionString  = conversionDict[resultName[0]] + conversionDict[resultName[1]]
+    conversionString1 = conversionDict[resultName[1]] + conversionDict[resultName[0]]
+    print("Get the values of the length or the angle from the fig graph")
+    query = "START z=node(*) WHERE z.name={A} OR z.name = {B} RETURN z"
+    data, metadata = cypher.execute(graph_db, query, {"A": conversionString,"B": conversionString1})
+    temp3 = data[0][0]
+    print(temp3["value"])
+    writeToFile(conversionString, "length", None, temp3["value"])
     print("Exiting getInput_Output function")
     
 #EndOfFunction	
 
-
-
-#Get 
+#Get side from the relationship such as base, perpendicular or hypotenuse
 def getSideFromRelationship(theorem,rel, originalSide, originalObject):   
     print("Inside getSideFromRelationship function")
     sideName = None 
@@ -173,7 +169,7 @@ def getSideFromRelationship(theorem,rel, originalSide, originalObject):
         elif rel == "HAS": 
     	    query = "START a=node({B}) MATCH a-[:HAS]-b WHERE b.name = {A}  RETURN r"
         else :
-	    print("given relationship not found ")
+			print("given relationship not found ")
         data,metadata = cypher.execute(graph_db, query, {"A" :originalSide, "B":node_triangle_temp.id})
         count = 0
         for row in data:
@@ -195,107 +191,143 @@ def getSideFromRelationship(theorem,rel, originalSide, originalObject):
 	    sideName = "CA"
     #End of pythagoras theorem
     else :
-	print("theorem selected is not pythagoras ")
+		print("theorem selected is not pythagoras ")
     return sideName
     print("Exiting getSideFromRelationship function")
 #EndOfFunction
 
-def check_theorem_object_map(theorem, objName, objType):
-    print("inside check_theorem_object_map function ")
-    # This fucntion will check if the geom object can be used with the given theorem
-    # For example if a line is checked with pythagoras theorem, so it will check if it is a side of rt angle triangle
-    # Similarly for each theorem, a condition will be checked for each object
-    # This function would be called when you have given one data( say input data) and now you have to give more data, first check if the input can be used in other theorem or not
+#This function will save the current state of the data
+#It includes theorem selected, attributes related to the theorem in the figure, input selected, expected output
+def saveCurrentState(theorem, selectedSide, input_list, output_list):
+	print("Inside saveCurrentState function")
+	currentState_input = input_list
+	currentState_output = output_list
+	currentState_selectedSide = selectedSide
+	current_State_theorem = theorem
+	currentState_theorem_data = {currentState_selectedSide, currentState_input, currentState_output}
+	cuurentState_theorem_dict = {current_State_theorem : currentState_theorem_data}
+	print("theorem is "+ theorem)
+	print(" selected side is " + selectedSide)
+	print(" input_list is "+ input_list)
+	print(" output_list is "+ output_list)
+	print("Exiting saveCurrentState function")
 #EOF
 
-theoremList = ["pythagorus", "inequality"]
-def generateData(theorem = None, num_questions = 1):
+def getPreviousState():
+	return currentState_data
+#EOF
+def check_theorem_object_map(theorem, objName, objType):
+    print("inside check_theorem_object_map function ")
+    # This function will check if the geom object can be used with the given theorem
+    # For example if a line is checked with pythagoras theorem, so it will check if it is a output of pythagoras theorem 
+    # Similarly for each theorem, a condition will be checked for each object
+    # This function would be called when you have given one data( say input data) and now you have to give 
+	# more data, first check if the input can be used in other theorem or not
+	
+	#Three cases need to handle in this function
+	#1) Is there a available option of attribute selected in previous theorem
+	#2) If not, is there are other theorems stored in stack
+	#3) If not, is there are default theorems available
+	#4) If not then return false
+#EOF
+
+
+# This is the main function of this component. It will perform the following operations
+# 1) Pick the theorem given by the user or randomly from the database (if no theorem is given by the user)
+# 2) Now depending on the theorem picked, get the required configuration (ex. right angle triangle in case of pythagorean theorem)
+# 3) For pythogorean theorem, from the selected configuration, pick one triangle randomly
+# 4) Pick one side randomly from the previously selected triangle 
+# 5) Get the relationship of this side with the selected triangle (ex. base, perpendicular side or hypotenuse side)
+# 6) Get the input and output from the KT
+# 7) Subtract the number of questions and redo the whole process if the number of remaining questions are still > 0
+# 8) Similar concept will be applied for other theorems
+def generateData(graph_root = None, theorem_list = None, firstTime = 1):
     print("Inside generateData function")
 
-    #If no theorem is given, pick randomly from the existing database
-    theorem = random.sample(theoremList, 1)
-    while 1 :	
-	if theorem == "pythagorus" :
-		
-		#Get all right angle triangles in the figure
-		getAllRightAngleTriangles()
-		randomSet = random.sample(list_right_triangles,1)
-		a = randomSet
-		print(a[0]["name"])
+    if firstTime == 1 :	
+		#If no theorem is given, pick randomly from the existing database
+		if len(theorem_list) == 0 :
+			theorem = random.sample(default_theoremList, 1)
+			
+		if theorem == "pythagorus" :
+			
+			#Get all right angle triangles in the figure and save it in a list
+			list_right_triangles = getAllRightAngleTriangles(graph_root)
+			
+			#Generate a side - theorem mapping graph (This can be done in above function also..need to think)
+			# TODO generateMap_side_theorem(graph_root, list_right_triangles)
+			
+			randomSet = random.sample(list_right_triangles,1)
+			a = randomSet
+			print(a[0]["name"])
 
-		#Choose one triangle randomly
-		selectedNode = a[0]
+			#Choose one triangle randomly
+			selectedNode = a[0]
 
-		#Query for getting all sides of a given triangle through its name
-		query = "START a=node({A}) MATCH a-[:HAS]-b RETURN b"
-		data,metadata = cypher.execute(graph_db, query, {"A" :selectedNode.id})
+			#Query for getting all sides of a given triangle through its name
+			query = "START a=node({A}) MATCH a-[:HAS]-b RETURN b"
+			data,metadata = cypher.execute(graph_db, query, {"A" :selectedNode.id})
 
-		#Getting random side from above array
-		print(" Printing result from data in query ");
-		array = []
-		for row in data:
-			print(row[0]["name"])
-		array.append(str(row[0]["name"]))
+			#Getting random side from above array
+			print(" Printing result from data in query ");
+			array = []
+			for row in data:
+				print(row[0]["name"])
+				array.append(str(row[0]["name"]))
 
-		print (array)
-		side1 = random.sample((array),  1)
-		side2 = ''.join(side1) 
-		print(side2)
+			print (array)
+			side1 = random.sample((array),  1)
+			side = ''.join(side1) 
+			print(side)
 
-		#side2 = "PS"
-
-		#Query for getting all relationships of a selected side with other objects
-		print("Query for getting all relationships of a selected side with other objects")
-		query = "START a=node(*) MATCH a-[r:HAS]-b WHERE a.name = {A}  RETURN a,b,r"
-		cypher.execute(graph_db, query, {"A" :side2}, row_handler=handle_relationship)
-		
-		#Get the relations stored in data
-		query = "START a=node(*) MATCH a-[r:HAS]-b WHERE a.name = {A}  RETURN r"
-		data,metadata = cypher.execute(graph_db, query, {"A" :side2})
-		
-		print(len(dict1))
-		rel = random.choice(dict1.keys())
-		print(rel)
-		originalSide = dict1[rel]
-		originalObject = dict2[rel]
-		print("original side is " + originalSide)
-		print("original object is " + originalObject)
-		#tempDict[rel] = originalSide
-		del dict1[rel]
-	   
-		#For input data
-		selectedSide = str(getSideFromRelationship(theorem,rel,originalSide,originalObject))
-		print("selected side is " + str(selectedSide))
-		if selectedSide :
-			getInput_OutputFromSide(theorem,selectedSide, originalSide, originalObject,1,0)
-
-		#We have different options here, currently I am taking num_of_questions > 1 . WE can have options such as complex questions, interesting questions, For output data
-		num_questions = num_questions - 1
-		if num_questions == 0 :
-			break
-		elif dict1.len() == 0:
-			theorem = random.sample(theoremList, 1)
-			#check_theorem_object_map(theorem, objName, objType) #For checking if the obj can be used in other theorem
-			continue
-		else:
-			rel1 = random.choice(dict1.keys())
-			print(rel1)
-			originalSide = dict1[rel1]
-			originalObject = dict2[rel1]
-			selectedSide = str(getSideFromRelationship(theorem,rel1,originalSide, originalObject))
+			#Query for getting all relationships of a selected side with other objects in the given figure
+			print("Query for getting all relationships of a selected side with other objects in the given figure")
+			query = "START a=node(*) MATCH a-[r:HAS]-b WHERE a.name = {A}  RETURN a,b,r"
+			cypher.execute(graph_db, query, {"A" :side}, row_handler=handle_relationship)
+			
+			#Get the relations stored in data
+			query = "START a=node(*) MATCH a-[r:HAS]-b WHERE a.name = {A}  RETURN r"
+			data,metadata = cypher.execute(graph_db, query, {"A" :side})
+			
+			print(len(dict1))
+			rel = random.choice(dict1.keys())
+			print(rel)
+			originalSide = dict1[rel]
+			originalObject = dict2[rel]
+			print("original side is " + originalSide)
+			print("original object is " + originalObject)
+			
+			# It is deleted so that next selection should not select this again
+			del dict1[rel]
+		   
+			#For input data...it means selecting side based on base, perpendicular or hypotenuse relationship
+			selectedSide = str(getSideFromRelationship(theorem,rel,originalSide,originalObject))
 			print("selected side is " + str(selectedSide))
 			if selectedSide :
-				getInput_OutputFromSide(theorem,selectedSide, originalSide,originalObject,0,1)
-				num_questions = num_questions - 1
-				if num_questions == 0 :
-					break
-			else: 
-				print(" no side can be selected now ")
-				theorem = random.sample(theoremList, 1)
-	#End of outer if
-	if theorem == "inequality" :
-		print("going for inequality theorem ")
-    #End of while loop
+				getInput_OutputFromSide(theorem,selectedSide, originalSide, originalObject,1,0)
+				saveCurrentState(theorem, selectedSide, input_list, output_list)
+				return
+		if theorem == "inequality" :
+			print("going for inequality theorem ")	
+    else:	
+		#First time is not zero
+		#Check for the previous state and pick the other options from the theorem selected last time
+		previousState_data = getPreviousState()
+		
+		#while 1:
+		#For checking if the selected side or angle can be used in other theorem
+			#isAvailable_list = check_theorem_object_map(graph_root, theorem, objName, objType) 
+			#if isAvailable_list[0] == true
+			#	if isAvailable_list[1] == "pythagoras"
+			#		break
+			# 	else
+			#		continue
+				#End of inner if
+			#End of outer if
+		#End of while loop	 
+	#End of outermost if
+	
+	
     print("Exiting generateData function")
 #EndOfFunction
 
