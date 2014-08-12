@@ -6,8 +6,8 @@ from __future__ import print_function
 from py2neo import neo4j, cypher
 from macro import *
 from cypher_handling_functions import *
-#from kd2_new import graph_db, node_root
-
+from macro import graph_db, node_root
+import random
 
 # Get all the right angles in a given configuration used in pythagorean theorem
 #list_right_triangles = []
@@ -241,18 +241,19 @@ def check_theorem_object_map(theorem, objName, objType):
 # 6) Get the input and output from the KT
 # 7) Subtract the number of questions and redo the whole process if the number of remaining questions are still > 0
 # 8) Similar concept will be applied for other theorems
-def generateData(graph_root = None, theorem_list = None, firstTime = 1):
-    print("Inside generateData function")
+def generateData(graph_db, theorem_list = None, firstTime = 1):
+    print("Inside generateData function and theorem_list is "+ theorem_list)
 
     if firstTime == 1 :	
 		#If no theorem is given, pick randomly from the existing database
 		if len(theorem_list) == 0 :
 			theorem = random.sample(default_theoremList, 1)
-			
-		if theorem == "pythagorus" :
+		else :
+			theorem = random.sample(theorem_list, 1)	
+		if theorem_list == "Pythagoras" :
 			
 			#Get all right angle triangles in the figure and save it in a list
-			list_right_triangles = getAllRightAngleTriangles(graph_root)
+			list_right_triangles = getAllRightAngleTriangles(graph_db)
 			
 			#Generate a side - theorem mapping graph (This can be done in above function also..need to think)
 			# TODO generateMap_side_theorem(graph_root, list_right_triangles)
