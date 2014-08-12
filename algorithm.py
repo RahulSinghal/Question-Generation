@@ -7,16 +7,7 @@ from py2neo import neo4j, cypher
 from generateFacts_solutions import *
 from generateDataComponent import generateData
 from generateConfiguration import generateFigure
-
-#######These lines insides hashes have been added to protect kd2 from entering here #########
-# Attach to the graph db instance
-graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
-
-graph_db.clear()
-#Create root node
-root = "Root"
-node_root, = graph_db.create({"name":root,"type":"node"})
-######################################################
+from macro import graph_db, node_root
 
 import subprocess
 import random
@@ -123,13 +114,17 @@ def drawTree(dc):
 
 	
 #This function is being called from gui.py
-def generateQuestion(dc, obj, concept, theorem, num_questions, nowGenerateFigure = 1):
+def generateQuestion(obj, concept, theorem, num_questions, nowGenerateFigure = 1, dc = None):
 	print("Inside generateQuestion function")
 	print(" geom_object is " + str(obj) + " concept is " + str(concept) + " theorem is " + str(theorem) + " num_questions is "+ str(num_questions))
+	if dc == None :
+	    	print("dc is none ")
+	else :
+		print(" dc is nnnnnnnnnnnnnnnnnnnnnnnnot none")
 	firstTime  = 1
 	while num_questions > 0:
 		if nowGenerateFigure == 1:
-			canGenerateFigure = generateFigure(dc,obj, firstTime, concept = None, theorem = None)
+			canGenerateFigure = generateFigure(dc, obj, firstTime, concept = None, theorem = None)
 			if canGenerateFigure == False :
 				print(" exiting from question generation as no more obj can be added ")
 				return
@@ -141,12 +136,12 @@ def generateQuestion(dc, obj, concept, theorem, num_questions, nowGenerateFigure
 			runCHR()
 			#TODO *****************************
 			#num_new_facts = Get num of new facts from CHR result file
-			num_new_facts = 0 // TODO
-			num_questions = num_questions - num_new_facts
+			#num_new_facts = 0 #// TODO
+			#num_questions = num_questions - num_new_facts
 			
 			if num_questions == 0 :
 				break			
-			canGenerateMoreData = generateData(concept = None, theorem = None, num_questions = 1)  #TODO CHECK IF EVERYCASE IS OVER, nowGenerateFig = 1
+			canGenerateMoreData = generateData(graph_db, theorem , 1)  #TODO CHECK IF EVERYCASE IS OVER, nowGenerateFig = 1
 				
 			if canGenerateMoreData == 0 :
 				nowGenerateFig = 1
@@ -160,7 +155,7 @@ def generateQuestion(dc, obj, concept, theorem, num_questions, nowGenerateFigure
 #End of function
 
 #This function is being called from gui.py
-generateQuestion("Triangle", "Perpendicular", "Pythagoras", "1", nowGenerateFigure = 1)
+#generateQuestion("Triangle", "Perpendicular", "Pythagoras", "1", nowGenerateFigure = 1)
 fo.close()
 
 
