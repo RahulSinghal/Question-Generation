@@ -6,17 +6,7 @@ import wx
 from py2neo import neo4j, cypher
 from cypher_handling_functions import *
 from math import *
-#from kd2_new import graph_db, node_root
-
-#######These lines insides hashes have been added to protect kd2 from entering here #########
-# Attach to the graph db instance
-graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
-
-graph_db.clear()
-#Create root node
-root = "Root"
-node_root, = graph_db.create({"name":root,"type":"node"})
-######################################################
+from macro import graph_db, node_root
 
 import subprocess
 import random
@@ -24,6 +14,8 @@ import math
 import string
 import sys
 
+quesArray = [10,10,10,20,30,40]
+cordArray = [10,10,20,20,30,30]
 listChar = []
 string.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def getNewPointName():
@@ -38,23 +30,11 @@ def getNewPointName():
 #End Of Function
 
 #Creating a file which contains all the data
-fo = open("data.txt", "wb")
+#fo = open("data.txt", "wb")
 #fo.write( "Writing data to be passed to CHR\n")
-fo.close()
+#fo.close()
 fo = open("data.txt", "a")
 
-
-def writeToFile(objectName, relationName, objectName1 = None, value=0):
-	if relationName == "KD1":
-		global fo
-		fo.write("triangle("+ objectName1[0].lower()+objectName1[0] + "," + objectName1[1].lower()+objectName1[1]+","+objectName1[2].lower() +objectName1[2]+"),\n")
-	elif relationName == "PERPENDICULAR":
-		fo.write("perp(" +objectName[0].lower() +objectName[0] + "," +objectName[1].lower() +objectName[1] + "," +objectName1[0].lower() +objectName1[0] + "," +objectName1[1].lower() + objectName1[1]+ "),\n")
-	elif relationName == "length":
-		fo.write("length(" +objectName[0].lower() +objectName[0] + "," +objectName[1].lower() +objectName[1]+","+str(value)+"),\n")	
-	else:
-		print(relationName + " has not been added till now\n")
-#End Of Function
 
 def writeFig_Data_to_File():
 	query = "START a=node(*) MATCH a-[r]->b RETURN a,b,r"
@@ -107,6 +87,8 @@ def generateTriangle(figureInfoArray, cordArray, triangleName,node_root):
 
 	#Create root node
 	node_triangle, = graph_db.create({"name": triangleName,"type":"triangle"})
+	if node_triangle :
+	    print(" node_triangle is generated")
 	rel_triangle_root = node_root.create_relationship_to(node_triangle, "KD1")
 
 	# Create three nodes
@@ -121,9 +103,9 @@ def generateTriangle(figureInfoArray, cordArray, triangleName,node_root):
 	rel_triangle_b = node_triangle.create_relationship_to(node_b, "HAS")
 	rel_triangle_c = node_triangle.create_relationship_to(node_c, "HAS")
 
-	rel_a_b, = graph_db.get_or_create_relationships((node_a, "ANGLE",node_b, {"value": quesArray[3]}))
-	rel_b_c, = graph_db.get_or_create_relationships((node_b, "ANGLE",node_c, {"value": quesArray[4]}))
-	rel_a_c, = graph_db.get_or_create_relationships((node_a, "ANGLE",node_c, {"value": quesArray[5]}))
+	rel_a_b, = graph_db.get_or_create_relationships((node_a, "ANGLE",node_b, {"value": figureInfoArray[3]}))
+	rel_b_c, = graph_db.get_or_create_relationships((node_b, "ANGLE",node_c, {"value": figureInfoArray[4]}))
+	rel_a_c, = graph_db.get_or_create_relationships((node_a, "ANGLE",node_c, {"value": figureInfoArray[5]}))
 
 	#Create input nodes
 	node_point1, node_point2, node_point3= graph_db.create({"name":point1, "cordx":cordArray[0],"cordy":cordArray[1],"type":"point"},{"name":point2, "cordx":cordArray[2],"cordy":cordArray[3],"type":"point"},{"name":point3, "cordx":cordArray[4],"cordy":cordArray[5],"type":"point"})
@@ -653,8 +635,6 @@ def check_join_Existing_line_existing_non_connected_point_not_on_line():
 		ang3 = 40
 		ang4 = 50
 
-		quesArray = [10,10,10,20,30,40]
-		cordArray = [10,10,20,20,30,30]
 		generateTriangle(quesArray, cordArray, triangleName,node_root)
 
 		#addLineInTriangle(lineName1, length, ang1, ang2,ang3,ang4,node_triangle)
@@ -877,10 +857,10 @@ def drawMedian(firstTime):
 #EOF
 
 def addConceptFigure(concept, firstTime):
-	if geom_object == "Perpendicular" :
+	if concept == "Perpendicular" :
 		if drawPerpendicular(firstTime) == 1 :return 1
 		return 0
-	if geom_object == "Median" :
+	if concept == "Median" :
 		if drawMedian(firstTime) == 1: return 1
 	else :
 		print(" Inside addConceptFigure, concept not defined ")
@@ -949,8 +929,9 @@ def generateConceptFigure(concept, firstTime = 1, change_concept_possible = 0):
 #End of Function
 
 point_Name_Cord_Map = {}
-def drawTree_UI(dc, graph_db):
+def drawTree_UI(graph_db, dc):
 	print("entering into drawTree_UI function ")
+	#dc = wx.PaintDC(e.GetEventObject())
 	dc.SetPen(wx.Pen(wx.BLACK, 4))
 	#Pick all the points and save their cordinates 
 	query = "START z=node(*) WHERE z.type={A} RETURN z"
@@ -991,21 +972,26 @@ def drawTree_UI(dc, graph_db):
 #EOF
 
 #This is the main function of this component. It will generate a figure configuration	
-def generateFigure(dc,geom_object, firstTime, concept, theorem):
+def generateFigure(dc, geom_object, firstTime, concept, theorem):
 	print("inside generateFigure function ")
+	if dc == None :
+                print("dc is none ")
+        else :
+                print(" dc is nnnnnnnnnnnnnnnnnnnnnnnnot none")
+
 	if generateObjFigure(geom_object, firstTime) == True :
-		drawTree_UI(dc,graph_db)
+		drawTree_UI(graph_db, dc)
 		print("Calling generateObject second time ******************")
 		if generateObjFigure(geom_object, 0) == True:#Passing firstTime = 0
-			drawTree_UI(dc, graph_db)
+			drawTree_UI(graph_db, dc)
 			print("Calling generateObject third time ******************")
 			if generateObjFigure(geom_object, 0) == True:#Passing firstTime = 0
-				drawTree_UI(dc, graph_db)
+				drawTree_UI(graph_db, dc)
 				print("Calling generateObject fourth time ******************")
 				if generateObjFigure(geom_object, 0) == True:#Passing firstTime = 0
-					drawTree_UI(dc, graph_db)
-		######################generateConceptFigure(concept)
-		#####################writeFig_Data_to_File()
+					drawTree_UI(graph_db, dc)
+		generateConceptFigure(concept)
+		writeFig_Data_to_File()
 		return True
 	else :
 		print(" cannot add more objects, hence terminationg algorithm ")
